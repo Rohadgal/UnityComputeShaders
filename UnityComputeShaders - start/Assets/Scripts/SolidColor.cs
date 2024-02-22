@@ -31,6 +31,15 @@ public class SolidColor : MonoBehaviour
         kernelHandle = shader.FindKernel(kernelName);
         shader.SetInt("texResolution", texResolution);
 
+        // the measurements of the reactangle width and heigth
+        int halfRes = texResolution >> 1;
+        // the location of the point of origin of the square
+        int quartRes = texResolution >> 2;
+
+        Vector4 rect = new Vector4(quartRes, quartRes, halfRes, halfRes);
+
+        shader.SetVector("rect", rect);
+
         shader.SetTexture(kernelHandle, "Result", outputTexture);
  
         rend.material.SetTexture("_MainTex", outputTexture);

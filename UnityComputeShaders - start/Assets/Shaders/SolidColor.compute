@@ -3,27 +3,41 @@
 #pragma kernel SolidYellow
 #pragma kernel SplitScreen
 #pragma kernel Circle
+#pragma kernel Square
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 RWTexture2D<float4> Result;
 
+// Return 1 if the pt is inside the bounds of the radius and 0 otherwise
 float inCircle(float2 pt, float radius){
     return (length(pt) < radius) ? 1.0 : 0.0;
 }
 
+// Create a float4 to hold the rectangle that defines the square
+float4 rect;
+// Return 0 if pt is in the rect parameter and 1 otherwise
+float inSquare(float2 pt, float4 rect){
+    float horz = step(pt.x, rect.x) - step(pt.x, rect.x + rect.z) +1;
+    float vert = step( pt.y, rect.y) - step( pt.y, rect.y + rect.w) +1;
+    return (horz + vert > 1.0) ? 1.0 : horz +vert ;
+}
+
+// Kernel for a solid Red color
 [numthreads(8,8,1)]
 void SolidRed (uint3 id : SV_DispatchThreadID)
 {
      Result[id.xy] = float4(1.0, 0.0, 0.0, 1.0);
 }
 
+// Kernel for a solid Yellow color
 [numthreads(8,8,1)]
 void SolidYellow (uint3 id : SV_DispatchThreadID)
 {
      Result[id.xy] = float4(1.0, 1.0, 0.0, 1.0);
 }
 
+// Kernel to divide the screen in four sections with red, green, yellow and black
 [numthreads(8,8,1)]
 void SplitScreen (uint3 id : SV_DispatchThreadID)
 {
@@ -32,6 +46,7 @@ void SplitScreen (uint3 id : SV_DispatchThreadID)
      Result[id.xy] = float4(step(halfRes, id.x), step(halfRes, id.y), 0.0, 1.0);
 }
 
+// Kernel to create a yellow circle in the center of the texture
 [numthreads(8,8,1)]
 void Circle (uint3 id : SV_DispatchThreadID)
 {
@@ -40,4 +55,15 @@ void Circle (uint3 id : SV_DispatchThreadID)
      int quartRes = halfRes >> 1;
      float res = inCircle( (float2) ((int2)id.xy - halfRes), (float) (texResolution>>2));
      Result[id.xy] = float4(res, res, 0.0, 1.0);
+}
+
+// Kernel to draw a square in the middle of the texture
+[numthreads(8,8,1)]
+void Square (uint3 id : SV_DispatchThreadID)
+{
+     int texResolution = 256;
+
+
+     float res = inSquare((float2) id.xy, rect );
+     Result[id.xy] = float4(0.0, 0.0, res, 1.0);
 }
